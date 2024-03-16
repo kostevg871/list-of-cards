@@ -1,76 +1,60 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { getCart } from "../services/cartApi";
-import { ISingleCart } from "../../interfaces/interface";
-import { calcTotalPrice } from "../../utils/calcTotalPrice";
+
+import { IProduct } from "../../interfaces/interface";
+import { getProducts } from "../services/cartApi";
 
 export interface IStateCart {
-  cart: ISingleCart;
+  products: IProduct[];
   isLoading: boolean;
   error: null;
-  allProductsPrice: number;
 }
 
 const initialState: IStateCart = {
-  cart: {
-    id: 0,
-    products: [],
-    total: 1,
-  },
+  products: [],
   isLoading: true,
   error: null,
-  allProductsPrice: 0,
 };
 
 const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    countPrice: (state) => {
-      state.allProductsPrice = calcTotalPrice(state.cart.products);
-    },
-    incrementQuantity: (state, action: PayloadAction<number>) => {
-      const findItem = state.cart.products.find(
-        (obj) => obj.id === action.payload
-      );
+    incrementQuantity: (state, { payload }: PayloadAction<number>) => {
+      const product = state.products.find((obj) => obj.id === payload);
 
-      if (findItem && findItem.quantity >= 1 && findItem.quantity < 10) {
-        findItem.quantity++;
+      if (product && product.quantity >= 1 && product.quantity < 10) {
+        product.quantity++;
       }
-
-      state.allProductsPrice = calcTotalPrice(state.cart.products);
     },
-    decrementQuantity: (state, action: PayloadAction<number>) => {
-      const findItem = state.cart.products.find(
-        (obj) => obj.id === action.payload
-      );
+    decrementQuantity: (state, { payload }: PayloadAction<number>) => {
+      const product = state.products.find((obj) => obj.id === payload);
 
-      if (findItem && findItem.quantity > 1) {
-        findItem.quantity--;
+      if (product && product.quantity > 1) {
+        product.quantity--;
       }
-
-      state.allProductsPrice = calcTotalPrice(state.cart.products);
     },
-    deleteCart: (state, action: PayloadAction<number>) => {
-      state.cart.products = state.cart.products.filter(
-        (obj) => obj.id !== action.payload
-      );
+    deleteCart: (state, { payload }: PayloadAction<number>) => {
+      state.products = state.products.filter((obj) => obj.id !== payload);
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(getCart.pending, (state) => {
+    builder.addCase(getProducts.pending, (state) => {
       state.isLoading = true;
     });
-    builder.addCase(getCart.fulfilled, (state, { payload }) => {
-      state.cart = payload;
-      state.isLoading = false;
-    });
-    builder.addCase(getCart.rejected, (state) => {
+    builder.addCase(
+      getProducts.fulfilled,
+      (state, { payload }: PayloadAction<IProduct[]>) => {
+        state.products = payload;
+        state.isLoading = false;
+      }
+    );
+    builder.addCase(getProducts.rejected, (state) => {
       state.isLoading = false;
     });
   },
 });
 
-export const { countPrice, incrementQuantity, decrementQuantity, deleteCart } =
+export const { incrementQuantity, decrementQuantity, deleteCart } =
   cartSlice.actions;
 
 export default cartSlice.reducer;
